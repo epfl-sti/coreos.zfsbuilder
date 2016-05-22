@@ -2,10 +2,11 @@
 
 set -e -x
 
-DOCKERNAME=coreos.zfs-builder
+DEPOT=registry.service.consul:5000
+DOCKERNAME=cluster.coreos.zfs
 
 build() {
-  docker build -t epflsti/${DOCKERNAME} .
+  docker build -t ${DEPOT}/${DOCKERNAME} .
 }
 
 autorun() {
@@ -13,14 +14,14 @@ autorun() {
   docker run \
          --name ${DOCKERNAME} \
          -v /usr/share/coreos:/host/usr/share/coreos \
-         epflsti/${DOCKERNAME} /build-zfs.sh
+         ${DEPOT}/${DOCKERNAME} /build-zfs.sh
 }
 
 exec() {
   docker exec -it \
          --name ${DOCKERNAME} \
          -v /usr/share/coreos:/host/usr/share/coreos \
-         epflsti/${DOCKERNAME} /bin/sh
+         ${DEPOT}/${DOCKERNAME} /bin/sh
 }
 
 interactive() {
@@ -28,7 +29,7 @@ interactive() {
   docker run -it \
          --name ${DOCKERNAME} \
          -v /usr/share/coreos:/host/usr/share/coreos \
-         epflsti/${DOCKERNAME} /bin/sh
+         ${DEPOT}/${DOCKERNAME} /bin/sh
 }
 
 eval "$@"
