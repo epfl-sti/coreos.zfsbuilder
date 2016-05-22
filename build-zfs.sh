@@ -10,28 +10,37 @@ setup_environment() {
     DISTRIB_RELEASE_MAJOR=$(echo "${DISTRIB_RELEASE}" |cut -d. -f1)
 }
 
-download_kernel_sources() {
+sync_repo_to_manifest_version() {
+    local repo_name="$1"
+    (cd /coreos/src/third_party/"$repo_name"; git checkout  $(perl -ne 'm|name="coreos/'"$repo_name"'".*revision="(.*?)"| && print $1' /coreos/.repo/manifests/build-${DISTRIB_RELEASE_MAJOR}.xml))
+}
+
+setup_coreos_overlay() {
     # See https://coreos.com/os/docs/latest/sdk-modifying-coreos.html
 
     mkdir /coreos
     # "| cat" prevents color autodetect monkey business
     (cd /coreos; repo init -u https://github.com/coreos/manifest.git -b refs/tags/v${DISTRIB_RELEASE}) |cat
-    (cd /coreos; repo sync coreos/coreos-overlay)
-    # This syncs to the latest version; need to roll back to the version
-    # recorded build-${COREOS_BUILD}.xml:
-    . /coreos/.repo/manifests/version.txt
-    OVERLAY_GIT_VERSION=$(perl -ne 'm|name="coreos/coreos-overlay".*revision="(.*?)"| && print $1' /coreos/.repo/manifests/build-${COREOS_BUILD}.xml)
-    (cd /coreos/src/third_party/coreos-overlay; git checkout ${OVERLAY_GIT_VERSION})
+    (cd /coreos; repo sync coreos/portage-stable coreos/coreos-overlay)
+    # The above synced to latest; roll back to version in manifest
+    sync_repo_to_manifest_version portage-stable
+    sync_repo_to_manifest_version coreos-overlay
+    if ! grep postage-stable /usr/share/portage/config/repos.conf; then
+      cat >> /usr/share/portage/config/repos.conf <<EOF
+[portage-stable]
+location = /coreos/src/third_party/portage-stable
 
-    git clone -b build-${DISTRIB_RELEASE_MAJOR} https://github.com/coreos/coreos-overlay.git
+[coreos]
+location = /coreos/src/third_party/coreos-overlay
+
+EOF
+    fi
 }
 
-patch_kernel() {
-    :
-}
-
-configure_kernel() {
-    :
+prepare_kernel() {
+    emerge sys-kernel/coreos-sources
+    zcat /proc/config.gz > /usr/src/linux/.config
+    make -C/usr/src/linux silentoldconfig modules_prepare
 }
 
 build_zfs_sources() {
@@ -39,4 +48,5 @@ build_zfs_sources() {
 }
 
 setup_environment
-download_kernel_sources
+setup_coreos_overlay
+prepare_kernel
