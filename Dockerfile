@@ -19,6 +19,9 @@ RUN emerge dev-vcs/git
 
 RUN wget -O /bin/repo https://storage.googleapis.com/git-repo-downloads/repo
 RUN chmod a+x /bin/repo
+# Repo doesn't like Python 3:
+RUN perl -i -pe 's{#!/usr/bin/env python}{#!/usr/bin/python2.7} if $. == 1' /bin/repo
+
 # repo complains if we don't do this:
 RUN git config --global user.email "stiitdev@groupes.epfl.ch"
 RUN git config --global user.name "STI-IT Dev"
