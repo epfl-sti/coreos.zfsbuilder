@@ -18,10 +18,7 @@ autorun() {
 }
 
 exec() {
-  docker exec -it \
-         --name ${DOCKERNAME} \
-         -v /usr/share/coreos:/host/usr/share/coreos \
-         ${DEPOT}/${DOCKERNAME} /bin/sh
+  docker exec -it ${DOCKERNAME} /bin/sh
 }
 
 interactive() {
