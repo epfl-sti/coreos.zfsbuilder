@@ -22,9 +22,9 @@ exec() {
 }
 
 interactive() {
-  docker rm -f ${DOCKERNAME} 2>/dev/null || true
+  docker rm -f ${BUILD_TAG} 2>/dev/null || true
   docker run -it \
-         --name ${DOCKERNAME} \
+         --name ${BUILD_TAG} \
          -v /usr/share/coreos:/host/usr/share/coreos \
          ${DEPOT}/${DOCKERNAME} /bin/sh
 }
