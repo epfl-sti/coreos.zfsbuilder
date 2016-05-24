@@ -32,4 +32,13 @@ RUN echo "#!/bin/sh" > /bin/tar
 RUN echo exec /bin/tar.ORIG '"$@"' >> /bin/tar
 RUN chmod 755 /bin/tar
 
+# Build ZFS userland – Unfortunately they cannot be installed, lest
+# we have to rebuild the entire kernel support chain (dracut etc) first
+# https://wiki.gentoo.org/wiki/ZFS
+RUN echo "sys-fs/zfs ~amd64" >> /etc/portage/package.accept_keywords
+RUN emerge awk  # Dependencies need to be installed before emerge -B
+RUN emerge -B sys-fs/zfs
+# Binary package found at or near /usr/portage/packages/sys-fs/zfs-0.6.5.4-r2.tbz2
+
+
 COPY build-zfs.sh /build-zfs.sh

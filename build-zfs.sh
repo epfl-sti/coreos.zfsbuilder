@@ -39,14 +39,33 @@ EOF
 
 prepare_kernel() {
     emerge sys-kernel/coreos-sources
-    zcat /proc/config.gz > /usr/src/linux/.config
+    (zcat /proc/config.gz;
+     echo CONFIG_SPL=m; \
+     echo CONFIG_ZFS=m; ) > /usr/src/linux/.config
     make -C/usr/src/linux silentoldconfig modules_prepare
 }
 
 build_zfs_sources() {
-    :
+    (cd /usr/src; git clone https://github.com/zfsonlinux/zfs.git)
+    local ZFS_VERSION="$(perl -ne 'm/Version:\s+(.*?$)/ && print $1' /zfs/META)"
+    (cd /usr/src/zfs; git checkout remotes/origin/spl-"$ZFS_VERSION"-release)
+    (cd /usr/src; git clone https://github.com/zfsonlinux/spl; git checkout remotes/origin/spl-"$ZFS_VERSION"-release; mv spl spl-"$ZFS_VERSION")
+    # It looks like there's some conflating of --enable-linux-builtin
+    # and CONFIG_MODVERSIONS being unset - Whatever, using an in-tree
+    # build works around it.
+    (cd /usr/src/spl-"$ZFS_VERSION"; ./autogen.sh; ./configure --enable-linux-builtin; ./copy-builtin /usr/src/linux)
+    (cd /usr/src/zfs; ./autogen.sh; ./configure --enable-linux-builtin; ./copy-builtin /usr/src/linux)
+    (cd /usr/src/linux; make modules SUBDIRS="spl"; make modules SUBDIRS="fs/zfs")
+}
+
+install_into() {
+    local $target="$1"
 }
 
 setup_environment
 setup_coreos_overlay
 prepare_kernel
+build_zfs_sources
+if [ "$1" = "install" ]; then
+    install_into "$2"
+fi
