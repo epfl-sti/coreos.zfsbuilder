@@ -66,6 +66,6 @@ setup_environment
 setup_coreos_overlay
 prepare_kernel
 build_zfs_sources
-if [ "$1" = "install" ]; then
+if [ "$1" = "--install" ]; then
     install_into "$2"
 fi
