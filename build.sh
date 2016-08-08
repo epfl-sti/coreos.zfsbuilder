@@ -5,29 +5,26 @@ set -e -x
 DEPOT=registry.service.consul:5000
 DOCKERNAME=cluster.coreos.zfs
 
-build() {
-  docker build -t ${DEPOT}/${DOCKERNAME} .
+build_base() {
+  DOCKER_IMAGE_BASE=${DEPOT}/${DOCKERNAME}.base
+  docker pull ${DOCKER_IMAGE_BASE} || true
+  docker build -t ${DOCKER_IMAGE_BASE} zfs.base/
+  docker push ${DOCKER_IMAGE_BASE} || true
 }
 
-autorun() {
-  docker rm -f ${DOCKERNAME} 2>/dev/null || true
-  docker run \
-         --name ${DOCKERNAME} \
-         -v /usr/share/coreos:/host/usr/share/coreos \
-         ${DEPOT}/${DOCKERNAME} /build-zfs.sh
+build_this_version() {
+  cp /usr/share/coreos/lsb-release zfs/
+  . zfs/lsb-release
+  DOCKER_IMAGE_THISVERSION=${DEPOT}/${DOCKERNAME}:${DISTRIB_RELEASE}
+  docker pull ${DOCKER_IMAGE_THISVERSION} || true
+  docker build -t ${DOCKER_IMAGE_THISVERSION} zfs/
+  docker push ${DOCKER_IMAGE_THISVERSION} || true
 }
 
-exec() {
-  docker exec -it ${DOCKERNAME} /bin/sh
-}
-
-interactive() {
-  docker rm -f ${BUILD_TAG} 2>/dev/null || true
-  docker run -it \
-         --name ${BUILD_TAG} \
-         -v /usr/share/coreos:/host/usr/share/coreos \
-         ${DEPOT}/${DOCKERNAME} /bin/sh
-}
-
-eval "$@"
+if [ -n "$1" ]; then
+    eval "$@"
+else
+    build_base
+    build_this_version
+fi
 

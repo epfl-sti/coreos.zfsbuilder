@@ -17,12 +17,12 @@ RUN perl -i -pe 's/elibtoolize/eautoreconf; elibtoolize/' /usr/portage/dev-libs/
 
 RUN emerge dev-vcs/git
 
-RUN wget -O /bin/repo https://storage.googleapis.com/git-repo-downloads/repo
+ADD https://storage.googleapis.com/git-repo-downloads/repo /bin/repo
 RUN chmod a+x /bin/repo
 # Repo doesn't like Python 3:
 RUN perl -i -pe 's{#!/usr/bin/env python}{#!/usr/bin/python2.7} if $. == 1' /bin/repo
 
-# repo complains if we don't do this:
+# Muffle some spurious warnings from repo:
 RUN git config --global user.email "stiitdev@groupes.epfl.ch"
 RUN git config --global user.name "STI-IT Dev"
 
@@ -40,5 +40,12 @@ RUN emerge awk  # Dependencies need to be installed before emerge -B
 RUN emerge -B sys-fs/zfs
 # Binary package found at or near /usr/portage/packages/sys-fs/zfs-0.6.5.4-r2.tbz2
 
-
-COPY build-zfs.sh /build-zfs.sh
+# Prepare for further customization at build time
+RUN mkdir /host
+ONBUILD ADD lsb-release /host/
+RUN mkdir /scripts
+COPY checkout-zfs.sh zfslib.sh /scripts/
+RUN chmod 755 /scripts/*.sh
+ONBUILD RUN /scripts/checkout-zfs.sh
+# TODO: merge in ../zfs/Dockerfile once it is tested.
+# ONBUILD RUN /scripts/build-zfs.sh
