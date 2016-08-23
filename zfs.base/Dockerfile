@@ -29,7 +29,8 @@ RUN git config --global user.name "STI-IT Dev"
 # Yes-man "tar" to work around https://github.com/coreos/bugs/issues/1095
 RUN mv /bin/tar /bin/tar.ORIG
 RUN echo "#!/bin/sh" > /bin/tar
-RUN echo exec /bin/tar.ORIG '"$@"' >> /bin/tar
+RUN echo /bin/tar.ORIG '"$@"' >> /bin/tar
+RUN echo exit 0 >> /bin/tar
 RUN chmod 755 /bin/tar
 
 # Build ZFS userland – Unfortunately they cannot be installed, lest
