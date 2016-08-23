@@ -9,7 +9,7 @@ source "$(dirname "$0")"/zfslib.sh
 
 sync_repo_to_manifest_version() {
     local repo_name="$1"
-    (cd /coreos/src/third_party/"$repo_name"; git checkout  $(perl -ne 'm|name="coreos/'"$repo_name"'".*revision="(.*?)"| && print $1' /coreos/.repo/manifests/build-${DISTRIB_RELEASE_MAJOR}.xml))
+    (cd /coreos/src/third_party/"$repo_name"; git checkout  $(perl -ne 'm|name="coreos/'"$repo_name"'".*revision=".*/(.*?)"| && print $1' /coreos/.repo/manifests/build-${DISTRIB_RELEASE_MAJOR}.xml))
 }
 
 setup_coreos_overlay() {
