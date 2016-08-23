@@ -47,5 +47,3 @@ RUN mkdir /scripts
 COPY checkout-zfs.sh zfslib.sh /scripts/
 RUN chmod 755 /scripts/*.sh
 ONBUILD RUN /scripts/checkout-zfs.sh
-# TODO: merge in ../zfs/Dockerfile once it is tested.
-# ONBUILD RUN /scripts/build-zfs.sh
