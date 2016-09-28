@@ -37,9 +37,22 @@ EOF
 setup_zfs_sources() {
     (cd /usr/src; git clone https://github.com/zfsonlinux/zfs.git)
     local ZFS_VERSION="$(perl -ne 'm/Version:\s+(.*?$)/ && print $1' /usr/src/zfs/META)"
-    (cd /usr/src/zfs; git checkout remotes/origin/zfs-"$ZFS_VERSION"-release)
+    local best_ref
+    for ref in remotes/origin/zfs-"$ZFS_VERSION"-release \
+                              tags/zfs-"$ZFS_VERSION"-rc3
+                              tags/zfs-"$ZFS_VERSION"-rc2
+                              tags/zfs-"$ZFS_VERSION"-rc1; do
+        if (cd /usr/src/zfs; git checkout "$ref" ); then
+            best_ref="$ref"
+            break
+        fi
+    done
+    if [ -z "$best_ref" ]; then
+        echo >&2 "Unable to find how to check out zfs-$ZFS_VERSION"
+        exit 2
+    fi
     (cd /usr/src; git clone https://github.com/zfsonlinux/spl.git; ln -sf spl spl-"$ZFS_VERSION")
-    (cd /usr/src/spl; git checkout remotes/origin/spl-"$ZFS_VERSION"-release)
+    (cd /usr/src/spl; git checkout $best_ref)
 }
 
 setup_environment
